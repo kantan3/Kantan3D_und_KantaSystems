@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kantan — 3D-Druck & Software aus Merseburg</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   ROOT & RESET
+───────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+
+/* ─── K3D TOKENS ─── */
+:root {
+  /* K3D */
+  --k3d-blue:#1a6ee8;
+  --k3d-blue-glow:rgba(26,110,232,0.4);
+  --k3d-bg:#060608;
+  --k3d-card:#0e0e12;
+  --k3d-border:rgba(255,255,255,0.07);
+  --k3d-gray:#555;
+  --k3d-light:#aaa;
+  --k3d-white:#f0ede8;
+  /* KS */
+  --ks-bg-deep:#04040e;
+  --ks-bg-mid:#060810;
+  --ks-bg-surface:#090c18;
+  --ks-bg-card:#0c1020;
+  --ks-purple-700:#050d28;
+  --ks-purple-600:#0a1a45;
+  --ks-purple-500:#0d2680;
+  --ks-purple-400:#1a45c8;
+  --ks-purple-300:#2563eb;
+  --ks-purple-200:#3b82f6;
+  --ks-purple-100:#93c5fd;
+  --ks-purple-dim:rgba(37,99,235,0.1);
+  --ks-text-bright:#f0f4ff;
+  --ks-text-mid:#8aa4c8;
+  --ks-text-dim:#2e4470;
+  --ks-border-subtle:rgba(37,99,235,0.15);
+  --ks-border-mid:rgba(37,99,235,0.38);
+  --ks-border-bright:rgba(59,130,246,0.6);
+  --ks-ease-out:cubic-bezier(0.16,1,0.3,1);
+}
+
+/* ─── ACTIVE BRAND ─── */
+body.brand-k3d {
+  --bg:var(--k3d-bg);
+  --accent:var(--k3d-blue);
+  --accent-glow:var(--k3d-blue-glow);
+  --card-bg:var(--k3d-card);
+  --border-col:var(--k3d-border);
+  --text-main:var(--k3d-white);
+  --text-sub:var(--k3d-light);
+  background:var(--k3d-bg);
+  color:var(--k3d-white);
+  font-family:'Space Grotesk',sans-serif;
+  cursor:none;
+}
+body.brand-ks {
+  --bg:var(--ks-bg-deep);
+  --accent:var(--ks-purple-200);
+  --accent-glow:rgba(59,130,246,0.4);
+  --card-bg:var(--ks-bg-card);
+  --border-col:var(--ks-border-subtle);
+  --text-main:var(--ks-text-bright);
+  --text-sub:var(--ks-text-mid);
+  background:var(--ks-bg-deep);
+  color:var(--ks-text-bright);
+  font-family:'DM Sans',sans-serif;
+  cursor:none;
+}
+
+/* GRAIN */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:2000;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity:.035;mix-blend-mode:overlay;
+}
+::-webkit-scrollbar{width:2px}
+::-webkit-scrollbar-thumb{background:var(--accent)}
+
+/* ─────────────────────────────────────────────
+   LOADER
+───────────────────────────────────────────── */
+#loader{
+  position:fixed;inset:0;z-index:10000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;
+  transition:opacity .8s ease;
+}
+body.brand-k3d #loader{background:var(--k3d-bg)}
+body.brand-ks  #loader{background:var(--ks-bg-deep)}
+.loader-logo-k3d{font-family:'Space Mono',monospace;font-size:clamp(22px,5vw,44px);font-weight:700;letter-spacing:6px}
+.loader-logo-ks{font-family:'Syne',sans-serif;font-size:1.2rem;letter-spacing:.18em;text-transform:uppercase}
+body.brand-k3d .loader-logo-k3d{display:block;color:var(--k3d-white)}
+body.brand-k3d .loader-logo-k3d span{color:var(--k3d-blue)}
+body.brand-k3d .loader-logo-ks{display:none}
+body.brand-ks  .loader-logo-k3d{display:none}
+body.brand-ks  .loader-logo-ks{display:block;color:var(--ks-text-mid)}
+.loader-bar-wrap{width:200px;height:1px;background:rgba(255,255,255,0.08);overflow:hidden}
+.loader-bar{height:100%;width:0%;transition:width .1s linear}
+body.brand-k3d .loader-bar{background:var(--k3d-blue);box-shadow:0 0 12px var(--k3d-blue)}
+body.brand-ks  .loader-bar{background:linear-gradient(90deg,var(--ks-purple-500),var(--ks-purple-200))}
+.loader-pct{font-size:.7rem;letter-spacing:.2em;color:#555}
+body.brand-k3d .loader-pct{font-family:'Space Mono',monospace}
+body.brand-ks  .loader-pct{font-family:'Syne',sans-serif}
+
+/* ─────────────────────────────────────────────
+   CURSOR
+───────────────────────────────────────────── */
+.cursor-dot,.cursor-ring{
+  position:fixed;pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+}
+.cursor-dot{width:5px;height:5px;border-radius:50%}
+body.brand-k3d .cursor-dot{background:var(--k3d-blue)}
+body.brand-ks  .cursor-dot{background:var(--ks-purple-200);mix-blend-mode:exclusion}
+.cursor-ring{
+  width:34px;height:34px;border-radius:50%;
+  transition:width .3s ease,height .3s ease,border-color .3s,background .3s;
+}
+body.brand-k3d .cursor-ring{border:1px solid rgba(26,110,232,0.5)}
+body.brand-ks  .cursor-ring{border:1.5px solid rgba(59,130,246,0.45)}
+.cursor-ring.hover{width:56px;height:56px}
+body.brand-k3d .cursor-ring.hover{border-color:var(--k3d-blue);background:rgba(26,110,232,0.07)}
+body.brand-ks  .cursor-ring.hover{border-color:var(--ks-purple-200);opacity:.7}
+
+/* ─────────────────────────────────────────────
+   NAV
+───────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:999;
+  height:60px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;
+  border-bottom:1px solid transparent;
+  transition:background .4s,backdrop-filter .4s,border-color .4s;
+}
+body.brand-k3d nav{background:rgba(6,6,8,.82);backdrop-filter:blur(20px) saturate(180%);border-color:var(--k3d-border)}
+body.brand-ks  nav{background:rgba(4,4,14,0);backdrop-filter:blur(0)}
+body.brand-ks  nav.scrolled{background:rgba(4,4,14,.85);backdrop-filter:blur(32px) saturate(200%);border-color:var(--ks-border-subtle)}
+
+.nav-logo-k3d{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;letter-spacing:3px;color:var(--k3d-white);text-decoration:none}
+.nav-logo-k3d span{color:var(--k3d-blue)}
+.nav-logo-ks{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:400;display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ks-text-bright);letter-spacing:.08em}
+.logo-icon-ks{width:34px;height:34px;background:linear-gradient(135deg,var(--ks-purple-600),var(--ks-purple-300));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;box-shadow:0 4px 16px rgba(5,13,40,.6),0 0 0 1px rgba(37,99,235,.3)}
+
+body.brand-k3d .nav-logo-k3d{display:flex;align-items:center}
+body.brand-k3d .nav-logo-ks{display:none}
+body.brand-ks  .nav-logo-k3d{display:none}
+body.brand-ks  .nav-logo-ks{display:flex}
+
+/* Desktop nav links */
+.nav-links-k3d{display:none;gap:32px}
+.nav-links-ks{display:none;gap:.2rem;list-style:none}
+@media(min-width:768px){
+  body.brand-k3d .nav-links-k3d{display:flex}
+  body.brand-ks  .nav-links-ks{display:flex}
+}
+.nav-links-k3d a{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--k3d-light);text-decoration:none;transition:color .2s}
+.nav-links-k3d a:hover{color:var(--k3d-white)}
+.nav-links-ks a{color:var(--ks-text-mid);text-decoration:none;font-size:.83rem;font-weight:400;padding:.38rem .9rem;border-radius:8px;transition:color .2s,background .2s}
+.nav-links-ks a:hover{color:var(--ks-text-bright);background:var(--ks-purple-dim)}
+.nav-links-ks .nav-cta{background:linear-gradient(135deg,var(--ks-purple-700),var(--ks-purple-500));color:white!important;box-shadow:0 4px 20px rgba(10,26,69,.45);border:1px solid rgba(37,99,235,.25)}
+.nav-links-ks .nav-cta:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(10,26,69,.6)}
+
+/* BRAND TOGGLE */
+.brand-toggle{
+  display:flex;align-items:center;gap:0;
+  border-radius:20px;padding:3px;
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.04);
+  margin-left:16px;flex-shrink:0;
+}
+.bt-btn{
+  padding:5px 13px;border-radius:16px;border:none;
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  cursor:pointer;font-weight:700;transition:all .25s;
+  background:transparent;white-space:nowrap;
+}
+.bt-btn-k3d{font-family:'Space Mono',monospace;color:var(--k3d-light)}
+.bt-btn-ks{font-family:'Syne',sans-serif;color:var(--ks-text-mid)}
+body.brand-k3d .bt-btn-k3d{background:var(--k3d-blue);color:#fff;box-shadow:0 2px 10px rgba(26,110,232,.4)}
+body.brand-ks  .bt-btn-ks{background:var(--ks-purple-400);color:#fff;box-shadow:0 2px 10px rgba(26,69,200,.5)}
+
+.nav-right{display:flex;align-items:center;gap:12px}
+
+/* Hamburger */
+.hamburger{background:none;border:none;cursor:pointer;padding:8px;display:flex;flex-direction:column;gap:5px}
+@media(min-width:768px){.hamburger{display:none}}
+.hamburger span{display:block;width:22px;height:1.5px;background:var(--text-main,#f0ede8);transition:all .25s}
+body.brand-ks .hamburger span{background:var(--ks-text-bright)}
+.hamburger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.mobile-menu{
+  display:none;position:fixed;
+  top:60px;left:0;right:0;z-index:998;
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+body.brand-k3d .mobile-menu{background:rgba(6,6,8,.97);border-color:var(--k3d-border)}
+body.brand-ks  .mobile-menu{background:rgba(4,4,14,.97);border-color:var(--ks-border-subtle)}
+.mobile-menu.open{display:block}
+.mobile-menu a{
+  display:block;padding:16px 32px;font-size:11px;
+  letter-spacing:2px;text-transform:uppercase;
+  text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.05);
+  transition:color .2s,padding-left .2s;
+}
+body.brand-k3d .mobile-menu a{color:var(--k3d-light)}
+body.brand-k3d .mobile-menu a:hover{color:var(--k3d-white);padding-left:40px}
+body.brand-ks  .mobile-menu a{color:var(--ks-text-mid)}
+body.brand-ks  .mobile-menu a:hover{color:var(--ks-text-bright);padding-left:40px}
+
+/* ─────────────────────────────────────────────
+   BRAND PANELS
+───────────────────────────────────────────── */
+.panel{display:none}
+body.brand-k3d #panel-k3d{display:block}
+body.brand-ks  #panel-ks{display:block}
+
+/* ─────────────────────────────────────────────
+   ════════════════════════════════
+   K3D STYLES (scoped inside #panel-k3d)
+   ════════════════════════════════
+───────────────────────────────────────────── */
+#panel-k3d {
+  --blue:#1a6ee8;
+  --blue-glow:rgba(26,110,232,0.4);
+  --bg:#060608;
+  --card:#0e0e12;
+  --border:rgba(255,255,255,0.07);
+  --gray:#555;
+  --light:#aaa;
+  --white:#f0ede8;
+}
+
+/* HERO K3D */
+#k3d-hero{
+  position:relative;min-height:100vh;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 32px 80px;overflow:hidden;
+}
+#k3d-hero-canvas{position:absolute;inset:0;z-index:0;width:100%;height:100%}
+.k3d-hero-content{position:relative;z-index:2;max-width:920px}
+.k3d-hero-eyebrow{
+  font-family:'Space Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;
+  color:#1a6ee8;margin-bottom:20px;display:flex;align-items:center;gap:12px;opacity:0;
+}
+.k3d-hero-eyebrow::before{content:'';width:28px;height:1px;background:#1a6ee8}
+#k3d-hero h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(68px,15vw,148px);font-weight:900;line-height:.88;
+  letter-spacing:-3px;margin-bottom:36px;
+}
+#k3d-hero h1 .line{overflow:hidden;display:block}
+#k3d-hero h1 .line span{display:block;transform:translateY(110%)}
+.k3d-blue{color:#1a6ee8}
+.k3d-hero-desc-row{display:flex;flex-direction:column;gap:24px;opacity:0}
+@media(min-width:640px){.k3d-hero-desc-row{flex-direction:row;align-items:flex-end;gap:56px}}
+.k3d-hero-sub{font-size:clamp(13px,1.8vw,15px);color:#aaa;line-height:1.8;max-width:320px;font-weight:300}
+.k3d-hero-sub strong{color:#f0ede8;font-weight:500}
+.k3d-btn-group{display:flex;gap:12px;flex-wrap:wrap}
+.k3d-btn-primary{
+  padding:14px 28px;background:#1a6ee8;color:#fff;border:none;
+  font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  cursor:pointer;transition:box-shadow .3s,transform .2s;
+}
+.k3d-btn-primary:hover{box-shadow:0 0 36px rgba(26,110,232,.5);transform:translateY(-2px)}
+.k3d-btn-outline{
+  padding:14px 28px;background:transparent;color:#aaa;
+  border:1px solid rgba(255,255,255,0.07);
+  font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  cursor:pointer;transition:border-color .3s,color .3s,transform .2s;
+}
+.k3d-btn-outline:hover{border-color:rgba(255,255,255,.25);color:#f0ede8;transform:translateY(-2px)}
+.k3d-hero-stats{display:flex;gap:44px;flex-wrap:wrap;margin-top:56px;padding-top:28px;border-top:1px solid rgba(255,255,255,0.07);opacity:0}
+.k3d-stat-num{font-family:'Space Mono',monospace;font-size:clamp(26px,4vw,40px);font-weight:700;color:#f0ede8;line-height:1}
+.k3d-stat-num em{color:#1a6ee8;font-style:normal}
+.k3d-stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-top:6px}
+
+/* SCROLL INDICATOR K3D */
+.k3d-scroll-ind{
+  position:absolute;bottom:36px;right:36px;z-index:3;
+  display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;
+}
+.k3d-scroll-line{width:1px;height:60px;background:linear-gradient(180deg,transparent,#1a6ee8)}
+.k3d-scroll-ind span{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:#555;writing-mode:vertical-lr}
+
+/* TICKER */
+@keyframes tickerSlide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.k3d-ticker-wrap{
+  border-top:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.07);
+  padding:14px 0;overflow:hidden;position:relative;
+}
+.k3d-ticker-wrap::before,.k3d-ticker-wrap::after{content:'';position:absolute;top:0;bottom:0;width:80px;z-index:2}
+.k3d-ticker-wrap::before{left:0;background:linear-gradient(90deg,#060608,transparent)}
+.k3d-ticker-wrap::after{right:0;background:linear-gradient(-90deg,#060608,transparent)}
+.k3d-ticker{display:flex;gap:40px;white-space:nowrap;animation:tickerSlide 35s linear infinite}
+.k3d-ticker span{font-family:'Space Mono',monospace;color:#555;font-size:10px;letter-spacing:2px;flex-shrink:0}
+.k3d-ticker-dot{color:#1a6ee8!important}
+
+/* SECTIONS K3D */
+#panel-k3d section{padding:100px 32px;position:relative;overflow:hidden}
+.k3d-bg-text{
+  position:absolute;font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(100px,20vw,240px);font-weight:900;
+  color:transparent;-webkit-text-stroke:1px rgba(255,255,255,0.025);
+  user-select:none;pointer-events:none;letter-spacing:-4px;z-index:0;
+}
+.k3d-section-label{
+  font-family:'Space Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;
+  color:#1a6ee8;margin-bottom:16px;display:flex;align-items:center;gap:12px;
+}
+.k3d-section-label::before{content:'';width:24px;height:1px;background:#1a6ee8}
+#panel-k3d h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(38px,7vw,76px);font-weight:900;line-height:.95;
+  letter-spacing:-1.5px;color:#f0ede8;margin-bottom:16px;
+}
+
+/* PRODUCTS */
+#k3d-products{background:#08080b}
+.k3d-prod-grid{display:grid;grid-template-columns:1fr;gap:1px;margin-top:48px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.07)}
+@media(min-width:640px){.k3d-prod-grid{grid-template-columns:1fr 1fr}}
+.k3d-prod-card{
+  background:#0e0e12;padding:36px 32px;position:relative;overflow:hidden;cursor:pointer;
+  transition:background .3s;
+}
+.k3d-prod-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:0%;background:#1a6ee8;transition:height .4s ease}
+.k3d-prod-card:hover{background:#111117}
+.k3d-prod-card:hover::before{height:100%}
+.k3d-prod-num{font-family:'Space Mono',monospace;color:#555;font-size:10px;letter-spacing:2px;margin-bottom:20px}
+.k3d-prod-icon{font-size:30px;margin-bottom:16px;display:block;transition:transform .3s}
+.k3d-prod-card:hover .k3d-prod-icon{transform:scale(1.1) rotate(-6deg)}
+.k3d-prod-card h3{font-size:17px;font-weight:700;margin-bottom:10px;color:#f0ede8}
+.k3d-prod-card p{color:#aaa;font-size:13px;line-height:1.7;font-weight:300;margin-bottom:20px}
+.k3d-tags{display:flex;flex-wrap:wrap;gap:6px}
+.k3d-tag-pill{
+  font-family:'Space Mono',monospace;
+  background:rgba(26,110,232,.07);border:1px solid rgba(26,110,232,.18);
+  color:#1a6ee8;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;
+}
+
+/* VORTEILE */
+.k3d-vorteile-grid{display:grid;grid-template-columns:1fr;gap:0;margin-top:48px}
+@media(min-width:640px){.k3d-vorteile-grid{grid-template-columns:1fr 1fr}}
+.k3d-adv-item{padding:36px 0;border-bottom:1px solid rgba(255,255,255,0.07);display:grid;grid-template-columns:44px 1fr;gap:20px;align-items:start}
+@media(min-width:640px){
+  .k3d-adv-item:nth-child(odd){padding-right:48px;border-right:1px solid rgba(255,255,255,0.07)}
+  .k3d-adv-item:nth-child(even){padding-left:48px}
+  .k3d-adv-item:nth-child(3),.k3d-adv-item:nth-child(4){border-bottom:none}
+}
+.k3d-adv-num{font-family:'Space Mono',monospace;font-size:11px;color:#1a6ee8;font-weight:700;padding-top:3px}
+.k3d-adv-item h4{font-size:15px;font-weight:700;color:#f0ede8;margin-bottom:8px}
+.k3d-adv-item p{color:#aaa;font-size:13px;line-height:1.7;font-weight:300}
+
+/* TEAM K3D */
+#k3d-team{background:#08080b}
+.k3d-team-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:48px}
+@media(min-width:640px){.k3d-team-grid{grid-template-columns:repeat(3,1fr)}}
+.k3d-team-card{
+  background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,0.07);
+  padding:32px;position:relative;cursor:pointer;
+  transition:border-color .3s,transform .3s;
+}
+.k3d-team-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#1a6ee8,transparent);opacity:0;transition:opacity .4s}
+.k3d-team-card:hover{border-color:rgba(26,110,232,.3);transform:translateY(-4px)}
+.k3d-team-card:hover::after{opacity:1}
+.k3d-team-avatar{
+  width:50px;height:50px;border-radius:50%;
+  background:linear-gradient(135deg,#1a6ee8,#0a3fa0);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:19px;font-weight:900;font-family:'Space Mono',monospace;
+  margin-bottom:20px;
+  box-shadow:0 0 0 1px rgba(26,110,232,.3),0 0 20px rgba(26,110,232,.15);
+}
+.k3d-team-role{font-family:'Space Mono',monospace;color:#1a6ee8;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.k3d-team-card h3{font-size:16px;font-weight:700;color:#f0ede8;margin-bottom:10px}
+.k3d-team-card p{color:#aaa;font-size:13px;line-height:1.7;font-weight:300}
+
+/* CONTACT K3D */
+.k3d-contact-layout{display:grid;grid-template-columns:1fr;gap:48px;margin-top:48px}
+@media(min-width:768px){.k3d-contact-layout{grid-template-columns:1fr 1fr;gap:64px}}
+.k3d-contact-info>p{color:#aaa;font-size:14px;line-height:1.8;font-weight:300;margin-bottom:8px}
+.k3d-contact-info{display:flex;flex-direction:column;gap:16px}
+.k3d-ci-row{display:flex;gap:14px;align-items:center}
+.k3d-ci-icon{
+  width:36px;height:36px;border:1px solid rgba(255,255,255,0.07);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;color:#1a6ee8;transition:border-color .3s,background .3s;
+}
+.k3d-ci-row:hover .k3d-ci-icon{border-color:#1a6ee8;background:rgba(26,110,232,.07)}
+.k3d-ci-val{color:#aaa;font-size:13px}
+.k3d-form-group{margin-bottom:16px}
+.k3d-form-group label{font-family:'Space Mono',monospace;color:#555;font-size:9px;letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:8px}
+.k3d-form-group input,.k3d-form-group textarea,.k3d-form-group select{
+  width:100%;padding:13px 16px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+  color:#f0ede8;font-size:13px;font-family:'Space Grotesk',sans-serif;
+  outline:none;transition:border-color .25s;
+}
+.k3d-form-group input:focus,.k3d-form-group textarea:focus,.k3d-form-group select:focus{border-color:#1a6ee8}
+.k3d-form-group textarea{min-height:130px;resize:vertical}
+.k3d-form-group select option{background:#0e0e12}
+.k3d-status-ok{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);color:#34d399;padding:14px;font-size:12px;margin-bottom:16px}
+.k3d-status-err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);color:#f87171;padding:14px;font-size:12px;margin-bottom:16px}
+
+/* FOOTER K3D */
+#k3d-footer{
+  padding:40px 32px;
+  border-top:1px solid rgba(255,255,255,0.07);background:#08080b;
+}
+.k3d-footer-inner{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:32px;margin-bottom:32px}
+.k3d-footer-logo{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;letter-spacing:4px;color:#f0ede8;margin-bottom:10px}
+.k3d-footer-logo span{color:#1a6ee8}
+.k3d-footer-tagline{color:#555;font-size:12px;line-height:1.7}
+.k3d-footer-links{display:flex;flex-direction:column;gap:10px}
+.k3d-footer-links a{color:#555;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;transition:color .2s}
+.k3d-footer-links a:hover{color:#f0ede8}
+.k3d-footer-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.05)}
+.k3d-footer-bottom p{color:#333;font-size:11px}
+
+/* REVEAL */
+.k3d-reveal{opacity:0;transform:translateY(30px);transition:opacity .8s,transform .8s}
+.k3d-reveal.visible{opacity:1;transform:none}
+
+/* ─────────────────────────────────────────────
+   ════════════════════════════════
+   KS STYLES (scoped inside #panel-ks)
+   ════════════════════════════════
+───────────────────────────────────────────── */
+#panel-ks {
+  --ks-ease-out:cubic-bezier(0.16,1,0.3,1);
+}
+
+/* HERO KS */
+.ks-hero{
+  min-height:100vh;position:relative;
+  display:grid;grid-template-columns:1fr 1fr;
+  overflow:hidden;
+}
+@media(max-width:1100px){.ks-hero{grid-template-columns:1fr}.ks-hero-right{display:none!important}}
+#ks-hero-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+.ks-hero-bg-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+  background-size:72px 72px;
+  mask-image:radial-gradient(ellipse 90% 80% at 60% 50%,black 10%,transparent 75%);
+  z-index:1;
+}
+.ks-hero-left{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:120px max(24px,4vw) 80px max(48px,6vw);
+  position:relative;z-index:3;
+}
+.ks-hero-right{
+  display:flex;align-items:center;justify-content:center;
+  padding:120px max(24px,4vw) 80px 0;
+  position:relative;z-index:3;
+}
+.ks-hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.4);
+  color:var(--ks-purple-100);font-size:.68rem;font-weight:400;
+  padding:.3rem 1rem;border-radius:100px;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:2.5rem;width:fit-content;
+}
+.ks-eyebrow-dot{width:5px;height:5px;background:var(--ks-purple-200);border-radius:50%;animation:blinkDot 2s ease-in-out infinite;box-shadow:0 0 8px var(--ks-purple-200)}
+@keyframes blinkDot{0%,100%{opacity:1}50%{opacity:.2}}
+#panel-ks h1{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(52px,7vw,100px);font-weight:800;line-height:1.0;
+  letter-spacing:-.01em;margin-bottom:2rem;overflow:hidden;
+}
+.ks-h1-line{display:block;overflow:hidden;padding-bottom:.08em}
+.ks-h1-line span{display:block}
+.ks-grad{background:linear-gradient(135deg,#bfdbfe 0%,var(--ks-purple-200) 40%,#60a5fa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ks-hero-desc{font-size:1.05rem;color:var(--ks-text-mid);max-width:440px;line-height:1.85;margin-bottom:2.5rem;font-weight:300}
+.ks-hero-actions{display:flex;gap:1rem;flex-wrap:wrap}
+
+/* Floating cards */
+.ks-cards-float{display:flex;flex-direction:column;gap:1.2rem;width:100%;max-width:340px}
+.ks-h-card{
+  background:rgba(18,18,40,.7);border:1px solid var(--ks-border-subtle);border-radius:18px;
+  padding:1.4rem 1.6rem;backdrop-filter:blur(20px) saturate(180%);
+  box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 0 1px rgba(37,99,235,.1) inset,0 24px 60px rgba(0,0,0,.3);
+  transition:transform .5s,box-shadow .4s,border-color .3s;position:relative;overflow:hidden;
+}
+.ks-h-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ks-purple-300),transparent);opacity:0;transition:opacity .4s}
+.ks-h-card:hover{transform:translateY(-5px) translateX(2px);border-color:var(--ks-border-mid)}
+.ks-h-card:hover::before{opacity:1}
+.ks-h-card:nth-child(2){transform:translateX(20px)}
+.ks-h-card:nth-child(2):hover{transform:translateX(20px) translateY(-5px)}
+.ks-h-card:nth-child(3){transform:translateX(-10px)}
+.ks-h-card:nth-child(3):hover{transform:translateX(-10px) translateY(-5px)}
+.ks-hc-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ks-text-dim);margin-bottom:.6rem}
+.ks-hc-title{font-family:'Syne',sans-serif;font-size:.98rem;font-weight:400;margin-bottom:.35rem}
+.ks-hc-desc{font-size:.77rem;color:var(--ks-text-mid);line-height:1.55;font-weight:300}
+.ks-hc-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:.8rem}
+.ks-hc-chip{background:var(--ks-purple-dim);border:1px solid var(--ks-border-subtle);color:var(--ks-purple-100);font-size:.62rem;padding:.22rem .65rem;border-radius:100px}
+.ks-hc-num{font-family:'Syne',sans-serif;font-size:2rem;font-weight:400;color:var(--ks-purple-200);line-height:1.2;letter-spacing:.04em}
+.ks-hc-sub{font-size:.7rem;color:var(--ks-text-dim);margin-top:.25rem}
+.ks-hc-dots{display:flex;gap:5px;margin-top:.75rem}
+.ks-hc-dot{width:7px;height:7px;border-radius:50%;background:var(--ks-purple-dim);border:1px solid var(--ks-border-subtle)}
+.ks-hc-dot.on{background:var(--ks-purple-400);border-color:var(--ks-purple-300);box-shadow:0 0 8px var(--ks-purple-400)}
+.ks-status-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);color:#34d399;font-size:.68rem;padding:.22rem .75rem;border-radius:100px;margin-bottom:.55rem}
+.ks-status-dot{width:5px;height:5px;border-radius:50%;background:#34d399;animation:blinkDot 2s infinite;box-shadow:0 0 6px #34d399}
+
+/* KS BUTTONS */
+.ks-btn-mag{position:relative;display:inline-flex;align-items:center;gap:8px;padding:.9rem 2.1rem;border-radius:12px;font-weight:400;font-size:.9rem;text-decoration:none;overflow:hidden;transition:transform .3s,box-shadow .3s}
+.ks-btn-mag::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.08),transparent);opacity:0;transition:opacity .3s}
+.ks-btn-mag:hover::after{opacity:1}
+.ks-btn-fill{background:linear-gradient(135deg,var(--ks-purple-700),var(--ks-purple-400));color:white;box-shadow:0 4px 24px rgba(10,26,69,.55),0 0 0 1px rgba(37,99,235,.2)}
+.ks-btn-fill:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(10,26,69,.7)}
+.ks-btn-ghost{color:var(--ks-text-mid);border:1px solid var(--ks-border-mid)}
+.ks-btn-ghost:hover{color:var(--ks-text-bright);border-color:var(--ks-purple-300);background:var(--ks-purple-dim);transform:translateY(-2px)}
+
+/* STAT BAR KS */
+.ks-stat-bar{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  border-top:1px solid var(--ks-border-subtle);border-bottom:1px solid var(--ks-border-subtle);
+  background:var(--ks-bg-mid);position:relative;
+}
+.ks-stat-bar::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(59,130,246,.4),transparent)}
+.ks-stat-item{
+  padding:28px max(16px,2.5vw);border-right:1px solid var(--ks-border-subtle);
+  position:relative;overflow:hidden;transition:background .3s;
+}
+.ks-stat-item:last-child{border-right:none}
+.ks-stat-item:hover{background:rgba(37,99,235,.06)}
+.ks-stat-item::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--ks-purple-600),var(--ks-purple-200));transform:scaleX(0);transform-origin:left;transition:transform .5s}
+.ks-stat-item:hover::after{transform:scaleX(1)}
+.ks-stat-num-big{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:400;color:var(--ks-text-bright);letter-spacing:.02em;line-height:1.2;margin-bottom:.35rem}
+.ks-stat-num-big sup{font-size:1rem;color:var(--ks-purple-200);vertical-align:super}
+.ks-stat-label{font-size:.75rem;color:var(--ks-text-dim);text-transform:uppercase;letter-spacing:.1em}
+@media(max-width:600px){.ks-stat-bar{grid-template-columns:1fr 1fr}.ks-stat-item:nth-child(2){border-right:none}.ks-stat-item:nth-child(3){grid-column:1/-1;border-top:1px solid var(--ks-border-subtle)}}
+
+/* KS SECTIONS */
+#panel-ks .ks-section{padding:100px max(24px,5vw);width:100%;position:relative}
+.ks-section-chip{display:inline-flex;align-items:center;gap:8px;background:var(--ks-purple-dim);border:1px solid var(--ks-border-mid);color:var(--ks-purple-200);font-size:.68rem;font-weight:400;padding:.25rem .9rem;border-radius:100px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.4rem}
+#panel-ks h2{font-family:'Syne',sans-serif;font-size:clamp(52px,8vw,110px);font-weight:800;letter-spacing:-.03em;line-height:.95;margin-bottom:1.5rem;background:linear-gradient(135deg,#e8f0ff 0%,var(--ks-purple-200) 55%,#93c5fd 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:block}
+.ks-section-p{font-size:1rem;color:var(--ks-text-mid);max-width:480px;line-height:1.85;font-weight:300}
+.ks-divider{height:1px;background:linear-gradient(90deg,transparent,var(--ks-border-mid),transparent)}
+.ks-section-bg-text{position:absolute;font-family:'Syne',sans-serif;font-size:clamp(8rem,18vw,18rem);font-weight:800;-webkit-text-stroke:1px rgba(37,99,235,.07);color:transparent;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;user-select:none;pointer-events:none;letter-spacing:-.02em;z-index:0}
+
+/* VISION */
+.ks-vision-inner{display:grid;grid-template-columns:1fr 1.1fr;gap:8rem;align-items:center}
+@media(max-width:1100px){.ks-vision-inner{grid-template-columns:1fr;gap:4rem}}
+.ks-vision-stack{display:flex;flex-direction:column;gap:1.1rem}
+.ks-v-card{
+  background:rgba(14,14,34,.8);border:1px solid var(--ks-border-subtle);border-radius:16px;
+  padding:1.4rem 1.8rem;display:flex;gap:1.2rem;align-items:flex-start;
+  backdrop-filter:blur(12px);box-shadow:0 4px 20px rgba(0,0,0,.4);
+  transition:border-color .3s,transform .5s,box-shadow .4s;position:relative;overflow:hidden;
+}
+.ks-v-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--ks-purple-400),transparent);opacity:0;transition:opacity .4s}
+.ks-v-card:hover{border-color:var(--ks-border-mid);transform:translateX(6px);box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.ks-v-card:hover::before{opacity:1}
+.ks-v-icon{width:42px;height:42px;flex-shrink:0;background:var(--ks-purple-dim);border:1px solid var(--ks-border-mid);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-top:2px;transition:background .3s,border-color .3s}
+.ks-v-card:hover .ks-v-icon{background:rgba(37,99,235,.2);border-color:var(--ks-border-bright)}
+.ks-v-title{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:400;margin-bottom:.3rem}
+.ks-v-desc{font-size:.82rem;color:var(--ks-text-mid);line-height:1.65;font-weight:300}
+
+/* PRODUCT KS */
+.ks-product-wrap{
+  background:rgba(18,18,40,.6);border:1px solid var(--ks-border-mid);border-radius:28px;overflow:hidden;
+  box-shadow:0 8px 60px rgba(0,0,0,.6);display:grid;grid-template-columns:1fr 280px;
+  backdrop-filter:blur(20px);position:relative;
+}
+@media(max-width:900px){.ks-product-wrap{grid-template-columns:1fr}.ks-product-body{border-right:none;border-bottom:1px solid var(--ks-border-subtle);padding:2.5rem}.ks-product-sidebar{flex-direction:row;flex-wrap:wrap;gap:.85rem;padding:1.5rem}.ks-p-metric{flex:1;min-width:120px}}
+.ks-product-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.5),transparent)}
+.ks-product-body{padding:3.5rem;border-right:1px solid var(--ks-border-subtle)}
+.ks-product-tag{display:inline-flex;align-items:center;gap:6px;background:var(--ks-purple-dim);border:1px solid var(--ks-border-mid);color:var(--ks-purple-100);font-size:.68rem;padding:.25rem .9rem;border-radius:100px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1.4rem}
+.ks-product-tag-dot{width:5px;height:5px;background:var(--ks-purple-200);border-radius:50%;animation:blinkDot 2s infinite}
+.ks-product-h3{font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:400;letter-spacing:.04em;margin-bottom:1rem;background:linear-gradient(135deg,var(--ks-text-bright),var(--ks-purple-100));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ks-product-desc{font-size:.93rem;color:var(--ks-text-mid);line-height:1.8;max-width:480px;margin-bottom:1.75rem;font-weight:300}
+.ks-product-chips{display:flex;flex-wrap:wrap;gap:7px}
+.ks-p-chip{background:rgba(255,255,255,.04);border:1px solid var(--ks-border-subtle);border-radius:100px;padding:.3rem 1.1rem;font-size:.78rem;color:var(--ks-text-mid);transition:border-color .25s,color .25s,background .25s}
+.ks-p-chip:hover{border-color:var(--ks-purple-300);color:var(--ks-purple-100);background:var(--ks-purple-dim)}
+.ks-product-sidebar{padding:2.5rem 2rem;display:flex;flex-direction:column;gap:1.2rem;background:rgba(8,8,24,.5)}
+.ks-p-metric{background:rgba(18,18,40,.7);border:1px solid var(--ks-border-subtle);border-radius:14px;padding:1.6rem;text-align:center;transition:border-color .25s,transform .4s}
+.ks-p-metric::before{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ks-purple-400),transparent);transform:scaleX(0);transition:transform .4s}
+.ks-p-metric{position:relative;overflow:hidden}
+.ks-p-metric:hover{border-color:var(--ks-border-mid);transform:scale(1.03)}
+.ks-p-num{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:400;color:var(--ks-purple-200);line-height:1.2;letter-spacing:.04em}
+.ks-p-label{font-size:.66rem;color:var(--ks-text-dim);text-transform:uppercase;letter-spacing:.1em;margin-top:.35rem}
+
+/* TEAM KS */
+.ks-team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;align-items:stretch}
+@media(max-width:900px){.ks-team-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.ks-team-grid{grid-template-columns:1fr}}
+.ks-t-card{
+  background:rgba(14,14,34,.7);border:1px solid var(--ks-border-subtle);border-radius:22px;
+  padding:2.5rem 2rem;text-align:center;backdrop-filter:blur(16px);
+  box-shadow:0 4px 30px rgba(0,0,0,.4);transition:border-color .3s,transform .5s,box-shadow .4s;
+  position:relative;overflow:hidden;min-height:280px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+}
+.ks-t-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ks-purple-300),transparent);opacity:0;transition:opacity .4s}
+.ks-t-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(37,99,235,.08),transparent 60%);opacity:0;transition:opacity .4s}
+.ks-t-card:hover{border-color:var(--ks-border-mid);transform:translateY(-8px);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.ks-t-card:hover::before{opacity:1}
+.ks-t-card:hover::after{opacity:1}
+.ks-t-avatar{
+  width:72px;height:72px;border-radius:50%;
+  background:linear-gradient(135deg,var(--ks-purple-700),var(--ks-purple-300));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:400;font-size:1.3rem;color:white;
+  margin:0 auto 1.4rem;
+  box-shadow:0 4px 24px rgba(10,26,69,.5),0 0 0 3px rgba(37,99,235,.15);
+  transition:box-shadow .4s,transform .4s;position:relative;z-index:1;
+}
+.ks-t-card:hover .ks-t-avatar{box-shadow:0 8px 36px rgba(10,26,69,.65),0 0 0 5px rgba(37,99,235,.25);transform:scale(1.05)}
+.ks-t-name{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:400;margin-bottom:.22rem;position:relative;z-index:1}
+.ks-t-role{font-size:.68rem;color:var(--ks-purple-200);font-weight:400;text-transform:uppercase;letter-spacing:.12em;margin-bottom:.9rem;position:relative;z-index:1}
+.ks-t-desc{font-size:.82rem;color:var(--ks-text-mid);line-height:1.7;font-weight:300;position:relative;z-index:1}
+
+/* ECOSYSTEM */
+.ks-eco-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:800px}
+@media(max-width:600px){.ks-eco-wrap{grid-template-columns:1fr}}
+.ks-e-card{
+  background:rgba(14,14,34,.7);border:1px solid var(--ks-border-subtle);border-radius:20px;
+  padding:2rem;backdrop-filter:blur(16px);
+  transition:border-color .3s,transform .4s,box-shadow .3s;
+  text-decoration:none;display:flex;flex-direction:column;color:inherit;
+  position:relative;overflow:hidden;min-height:220px;cursor:pointer;
+}
+.ks-e-card:hover{transform:translateY(-5px);border-color:var(--ks-border-mid)}
+.ks-e-card.here{border-color:var(--ks-purple-400);background:rgba(37,99,235,.08)}
+.ks-e-card.here::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ks-purple-300),transparent)}
+.ks-e-chip{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;font-weight:400;margin-bottom:.65rem;display:block}
+.ks-e-chip.ks{color:var(--ks-purple-200)}
+.ks-e-chip.k3d{color:#34d399}
+.ks-e-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:400;margin-bottom:.5rem;color:var(--ks-text-bright)}
+.ks-e-desc{font-size:.82rem;color:var(--ks-text-mid);line-height:1.65;font-weight:300}
+.ks-e-badge{display:inline-block;margin-top:1.1rem;font-size:.66rem;padding:.22rem .8rem;border-radius:100px}
+.ks-e-badge.active{background:rgba(37,99,235,.15);color:var(--ks-purple-100);border:1px solid var(--ks-border-mid)}
+.ks-e-badge.link{background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.22)}
+
+/* CONTACT KS */
+.ks-contact-wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:6rem;align-items:start}
+@media(max-width:900px){.ks-contact-wrap{grid-template-columns:1fr;gap:3rem}}
+.ks-c-info-list{display:flex;flex-direction:column;gap:1.1rem;margin-bottom:2.5rem}
+.ks-c-row{display:flex;align-items:center;gap:14px}
+.ks-c-icon{width:40px;height:40px;background:var(--ks-purple-dim);border:1px solid var(--ks-border-mid);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;transition:background .3s,border-color .3s}
+.ks-c-row:hover .ks-c-icon{background:rgba(37,99,235,.2);border-color:var(--ks-border-bright)}
+.ks-c-val{font-size:.87rem;color:var(--ks-text-mid);font-weight:300}
+.ks-form-group{margin-bottom:1.1rem}
+.ks-form-label{font-size:.67rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ks-text-dim);font-weight:400;display:block;margin-bottom:8px}
+.ks-form-control{
+  width:100%;padding:14px 18px;
+  background:rgba(14,14,34,.8);border:1px solid var(--ks-border-mid);border-radius:12px;
+  color:var(--ks-text-bright);font-size:.875rem;font-family:'DM Sans',sans-serif;font-weight:300;
+  outline:none;transition:border-color .25s,box-shadow .25s,background .25s;
+  -webkit-appearance:none;appearance:none;backdrop-filter:blur(8px);
+}
+.ks-form-control:focus{border-color:var(--ks-purple-300);box-shadow:0 0 0 3px rgba(59,130,246,.15);background:rgba(8,12,32,.9)}
+textarea.ks-form-control{min-height:130px;resize:vertical}
+select.ks-form-control option{background:var(--ks-bg-mid)}
+.ks-btn-submit{
+  width:100%;padding:16px;
+  background:linear-gradient(135deg,var(--ks-purple-700),var(--ks-purple-400));
+  color:white;border:none;border-radius:14px;font-weight:400;font-size:.9rem;
+  cursor:pointer;font-family:'DM Sans',sans-serif;
+  box-shadow:0 4px 28px rgba(10,26,69,.5);transition:transform .3s,box-shadow .3s;
+  position:relative;overflow:hidden;
+}
+.ks-btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(10,26,69,.65)}
+.ks-btn-submit:disabled{opacity:.5;transform:none}
+.ks-msg-ok{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);color:#34d399;border-radius:12px;padding:14px 18px;font-size:.84rem;margin-bottom:1.1rem}
+.ks-msg-err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;border-radius:12px;padding:14px 18px;font-size:.84rem;margin-bottom:1.1rem}
+
+/* FOOTER KS */
+.ks-footer{
+  padding:40px max(24px,5vw);border-top:1px solid var(--ks-border-subtle);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;
+  background:var(--ks-bg-mid);
+}
+.ks-footer-logo{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:400;display:flex;align-items:center;gap:8px;color:var(--ks-text-bright);letter-spacing:.07em}
+.ks-footer-mail{color:var(--ks-purple-200);text-decoration:none;font-size:.8rem;transition:color .2s}
+.ks-footer-mail:hover{color:var(--ks-purple-100)}
+.ks-footer-copy{font-size:.73rem;color:var(--ks-text-dim)}
+
+/* TILT */
+[data-tilt]{transition:transform .5s}
+
+/* ── INSTAGRAM LINKS ── */
+.ig-link{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  text-decoration:none;margin-top:14px;
+  transition:opacity .2s,transform .2s;opacity:.55;
+}
+.ig-link:hover{opacity:1;transform:translateX(3px)}
+.ig-link svg{flex-shrink:0}
+body.brand-k3d .ig-link{color:#aaa;font-family:'Space Mono',monospace}
+body.brand-ks  .ig-link{color:var(--ks-text-mid);font-family:'DM Sans',sans-serif;letter-spacing:.08em}
+.ig-link:hover{color:inherit}
+
+/* social row in footer */
+.social-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+.social-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 14px;border-radius:8px;font-size:10px;text-decoration:none;
+  transition:background .2s,border-color .2s,transform .2s;
+  white-space:nowrap;
+}
+.social-btn:hover{transform:translateY(-2px)}
+body.brand-k3d .social-btn{
+  border:1px solid rgba(255,255,255,0.1);color:#aaa;
+  font-family:'Space Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;
+}
+body.brand-k3d .social-btn:hover{border-color:rgba(255,255,255,.28);color:#f0ede8;background:rgba(255,255,255,.04)}
+body.brand-ks .social-btn{
+  border:1px solid var(--ks-border-subtle);color:var(--ks-text-mid);
+  font-family:'DM Sans',sans-serif;letter-spacing:.05em;
+}
+body.brand-ks .social-btn:hover{border-color:var(--ks-border-mid);color:var(--ks-text-bright);background:var(--ks-purple-dim)}
+</style>
+</head>
+<body class="brand-k3d">
+
+<!-- ─── LOADER ─── -->
+<div id="loader">
+  <div class="loader-logo-k3d">KANTAN<span>3D</span></div>
+  <div class="loader-logo-ks">Kanta Systems</div>
+  <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
+  <div class="loader-pct" id="loaderPct">0%</div>
+</div>
+
+<!-- ─── CURSOR ─── -->
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- ─────────────────────────────────────────────
+     NAV
+───────────────────────────────────────────── -->
+<nav id="navbar">
+  <!-- K3D Logo -->
+  <a href="#" class="nav-logo-k3d">KANTAN<span>3D</span></a>
+  <!-- KS Logo -->
+  <a href="#" class="nav-logo-ks"><div class="logo-icon-ks">KS</div>Kanta Systems</a>
+
+  <!-- K3D Links -->
+  <div class="nav-links-k3d">
+    <a href="javascript:void(0)" onclick="document.getElementById('k3d-products').scrollIntoView({behavior:'smooth'})">Produkte</a>
+    <a href="javascript:void(0)" onclick="document.getElementById('k3d-vorteile').scrollIntoView({behavior:'smooth'})">Vorteile</a>
+    <a href="javascript:void(0)" onclick="document.getElementById('k3d-team').scrollIntoView({behavior:'smooth'})">Team</a>
+    <a href="javascript:void(0)" onclick="document.getElementById('k3d-contact').scrollIntoView({behavior:'smooth'})">Kontakt</a>
+    <a href="https://ebay.io/m/Or711A" target="_blank" rel="noopener" style="color:#1a6ee8;border:1px solid rgba(26,110,232,0.35);padding:5px 14px;font-size:9px;letter-spacing:1.5px">eBay Shop ↗</a>
+  </div>
+
+  <!-- KS Links -->
+  <ul class="nav-links-ks">
+    <li><a href="javascript:void(0)" onclick="document.getElementById('ks-vision').scrollIntoView({behavior:'smooth'})">Vision</a></li>
+    <li><a href="javascript:void(0)" onclick="document.getElementById('ks-produkt').scrollIntoView({behavior:'smooth'})">Produkt</a></li>
+    <li><a href="javascript:void(0)" onclick="document.getElementById('ks-team').scrollIntoView({behavior:'smooth'})">Team</a></li>
+    <li><a href="javascript:void(0)" onclick="document.getElementById('ks-oekosystem').scrollIntoView({behavior:'smooth'})">Ökosystem</a></li>
+    <li><a href="javascript:void(0)" onclick="document.getElementById('ks-kontakt').scrollIntoView({behavior:'smooth'})" class="nav-cta">Kontakt</a></li>
+  </ul>
+
+  <div class="nav-right">
+    <!-- Brand Toggle -->
+    <div class="brand-toggle">
+      <button class="bt-btn bt-btn-k3d" onclick="setBrand('k3d')">Kantan3D</button>
+      <button class="bt-btn bt-btn-ks" onclick="setBrand('ks')">Kanta Systems</button>
+    </div>
+    <!-- Hamburger -->
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Menu K3D -->
+<div class="mobile-menu" id="mobileMenuK3d">
+  <a href="javascript:void(0)" onclick="document.getElementById('k3d-products').scrollIntoView({behavior:'smooth'});closeMenu()">Produkte</a>
+  <a href="javascript:void(0)" onclick="document.getElementById('k3d-vorteile').scrollIntoView({behavior:'smooth'});closeMenu()">Vorteile</a>
+  <a href="javascript:void(0)" onclick="document.getElementById('k3d-team').scrollIntoView({behavior:'smooth'});closeMenu()">Team</a>
+  <a href="javascript:void(0)" onclick="document.getElementById('k3d-contact').scrollIntoView({behavior:'smooth'});closeMenu()">Kontakt</a>
+  <a href="https://ebay.io/m/Or711A" target="_blank" rel="noopener" onclick="closeMenu()" style="color:#1a6ee8">eBay Shop ↗</a>
+</div>
+<!-- Mobile Menu KS -->
+<div class="mobile-menu" id="mobileMenuKS" style="display:none">
+  <a href="javascript:void(0)" onclick="document.getElementById('ks-vision').scrollIntoView({behavior:'smooth'});closeMenu()">Vision</a>
+  <a href="javascript:void(0)" onclick="document.getElementById('ks-produkt').scrollIntoView({behavior:'smooth'});closeMenu()">Produkt</a>
+  <a href="javascript:void(0)" onclick="document.getElementById('ks-team').scrollIntoView({behavior:'smooth'});closeMenu()">Team</a>
+  <a href="javascript:void(0)" onclick="document.getElementById('ks-oekosystem').scrollIntoView({behavior:'smooth'});closeMenu()">Ökosystem</a>
+  <a href="javascript:void(0)" onclick="document.getElementById('ks-kontakt').scrollIntoView({behavior:'smooth'});closeMenu()">Kontakt</a>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     KANTAN3D PANEL
+═══════════════════════════════════════════════ -->
+<div id="panel-k3d" class="panel">
+
+  <!-- HERO -->
+  <section id="k3d-hero">
+    <canvas id="k3d-hero-canvas"></canvas>
+    <div class="k3d-hero-content">
+      <div class="k3d-hero-eyebrow">3D-Druck aus Merseburg</div>
+      <h1>
+        <div class="line"><span>KAN</span></div>
+        <div class="line"><span>TAN<span class="k3d-blue">3D</span></span></div>
+      </h1>
+      <div class="k3d-hero-desc-row">
+        <p class="k3d-hero-sub">
+          <strong>Präzise gefertigt.</strong> Individuell gestaltet.<br>
+          Von drei Gründern aus Merseburg –<br>für Privatkunden und Unternehmen.
+        </p>
+        <div class="k3d-btn-group">
+          <button class="k3d-btn-primary" onclick="document.getElementById('k3d-products').scrollIntoView({behavior:'smooth'})">Produkte →</button>
+          <button class="k3d-btn-outline" onclick="document.getElementById('k3d-contact').scrollIntoView({behavior:'smooth'})">Anfrage stellen</button>
+          <a href="https://ebay.io/m/Or711A" target="_blank" rel="noopener" class="k3d-btn-outline" style="display:inline-flex;align-items:center;gap:7px;text-decoration:none">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            eBay Shop
+          </a>
+        </div>
+      </div>
+      <div class="k3d-hero-stats">
+        <div><div class="k3d-stat-num">8–<em>10</em></div><div class="k3d-stat-label">Einheiten / Tag</div></div>
+        <div><div class="k3d-stat-num"><em>3</em></div><div class="k3d-stat-label">Gründer</div></div>
+        <div><div class="k3d-stat-num"><em>100</em>%</div><div class="k3d-stat-label">Made in Germany</div></div>
+      </div>
+    </div>
+    <div class="k3d-scroll-ind" id="k3dScrollInd">
+      <div class="k3d-scroll-line"></div>
+      <span>Scrollen</span>
+    </div>
+  </section>
+
+  <!-- TICKER -->
+  <div class="k3d-ticker-wrap">
+    <div class="k3d-ticker">
+      <span class="k3d-ticker-dot">◆</span><span>Blumenstecker</span>
+      <span class="k3d-ticker-dot">◆</span><span>QR-Code Aufsteller</span>
+      <span class="k3d-ticker-dot">◆</span><span>RC-Fahrzeuge</span>
+      <span class="k3d-ticker-dot">◆</span><span>Individueller Druck</span>
+      <span class="k3d-ticker-dot">◆</span><span>Logoschilder</span>
+      <span class="k3d-ticker-dot">◆</span><span>Tischaufsteller</span>
+      <span class="k3d-ticker-dot">◆</span><span>Gadgets & Deko</span>
+      <span class="k3d-ticker-dot">◆</span><span>Schreibtisch-Organizer</span>
+      <span class="k3d-ticker-dot">◆</span><span>Blumenstecker</span>
+      <span class="k3d-ticker-dot">◆</span><span>QR-Code Aufsteller</span>
+      <span class="k3d-ticker-dot">◆</span><span>RC-Fahrzeuge</span>
+      <span class="k3d-ticker-dot">◆</span><span>Individueller Druck</span>
+      <span class="k3d-ticker-dot">◆</span><span>Logoschilder</span>
+      <span class="k3d-ticker-dot">◆</span><span>Tischaufsteller</span>
+      <span class="k3d-ticker-dot">◆</span><span>Gadgets & Deko</span>
+      <span class="k3d-ticker-dot">◆</span><span>Schreibtisch-Organizer</span>
+    </div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <section id="k3d-products" style="background:#08080b">
+    <div class="k3d-bg-text" style="top:-10px;right:-30px">01</div>
+    <div class="k3d-reveal"><div class="k3d-section-label">Produkte & Leistungen</div><h2>Was wir<br>fertigen</h2></div>
+    <div class="k3d-prod-grid k3d-reveal">
+      <div class="k3d-prod-card">
+        <div class="k3d-prod-num">— 01</div>
+        <span class="k3d-prod-icon">🌸</span>
+        <h3>Blumenstecker & Gartendeko</h3>
+        <p>Individuelle Stecker für Blumenläden, Floristik und Privatkunden. Wetterfest, farbenfroh und auf Wunsch mit Logo oder Text.</p>
+        <div class="k3d-tags"><span class="k3d-tag-pill">PLA</span><span class="k3d-tag-pill">PETG</span><span class="k3d-tag-pill">Custom</span></div>
+      </div>
+      <div class="k3d-prod-card">
+        <div class="k3d-prod-num">— 02</div>
+        <span class="k3d-prod-icon">📱</span>
+        <h3>QR-Code & Aufsteller</h3>
+        <p>Tischaufsteller mit QR-Code für Restaurants, Cafés und Events. Professionell, langlebig, in eurem Branding.</p>
+        <div class="k3d-tags"><span class="k3d-tag-pill">B2B</span><span class="k3d-tag-pill">Branding</span><span class="k3d-tag-pill">Menge</span></div>
+      </div>
+      <div class="k3d-prod-card">
+        <div class="k3d-prod-num">— 03</div>
+        <span class="k3d-prod-icon">🚀</span>
+        <h3>RC-Fahrzeuge & Modelle</h3>
+        <p>Bauteile für RC-Cars, Drohnen und Modellbau. Präzisionsteile nach euren CAD-Daten oder unseren Designs.</p>
+        <div class="k3d-tags"><span class="k3d-tag-pill">Fusion 360</span><span class="k3d-tag-pill">ABS</span><span class="k3d-tag-pill">Präzision</span></div>
+      </div>
+      <div class="k3d-prod-card">
+        <div class="k3d-prod-num">— 04</div>
+        <span class="k3d-prod-icon">⚙️</span>
+        <h3>Auftragsfertigung & B2B</h3>
+        <p>Von der Idee bis zur Serie. Wir übernehmen CAD, Slicing und Fertigung – für Unternehmen, Agenturen und Startups.</p>
+        <div class="k3d-tags"><span class="k3d-tag-pill">Serie</span><span class="k3d-tag-pill">CAD</span><span class="k3d-tag-pill">Partnership</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VORTEILE -->
+  <section id="k3d-vorteile">
+    <div class="k3d-bg-text" style="bottom:-10px;left:-30px">02</div>
+    <div class="k3d-reveal"><div class="k3d-section-label">Warum Kantan3D</div><h2>Unser<br>Ansatz</h2></div>
+    <div class="k3d-vorteile-grid">
+      <div class="k3d-adv-item k3d-reveal">
+        <div class="k3d-adv-num">01</div>
+        <div><h4>Schnell</h4><p>8–10 Einheiten täglich. Kurze Lieferzeiten durch lokale Fertigung in Merseburg – kein langer Versandweg, kein Zwischenhändler.</p></div>
+      </div>
+      <div class="k3d-adv-item k3d-reveal">
+        <div class="k3d-adv-num">02</div>
+        <div><h4>Präzise</h4><p>CAD-Modellierung in Fusion 360, professionelles Slicing und Qualitätskontrolle bei jedem einzelnen Auftrag.</p></div>
+      </div>
+      <div class="k3d-adv-item k3d-reveal">
+        <div class="k3d-adv-num">03</div>
+        <div><h4>Individuell</h4><p>Kein Lagerbestand, kein Mindestaufwand. Jedes Teil exakt nach euren Vorgaben – Material, Farbe, Maße.</p></div>
+      </div>
+      <div class="k3d-adv-item k3d-reveal">
+        <div class="k3d-adv-num">04</div>
+        <div><h4>Lokal</h4><p>Made in Merseburg. Direkte Ansprechpartner, kurze Wege, schnelle Abstimmung. Kein anonymer Online-Shop.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section id="k3d-team" style="background:#08080b">
+    <div class="k3d-bg-text" style="top:-10px;right:-30px">03</div>
+    <div class="k3d-reveal"><div class="k3d-section-label">Das Team</div><h2>Wer wir sind</h2></div>
+    <div class="k3d-team-grid">
+      <div class="k3d-team-card k3d-reveal">
+        <div class="k3d-team-avatar">N</div>
+        <div class="k3d-team-role">Produktionsleiter</div>
+        <h3>Niklas Göthe</h3>
+        <p>CAD in Fusion 360, Slicing und Druckerfarm. Entwickelt das Raketenmodell Horizon G1 unter der Marke Kantavia.</p>
+        <a href="https://www.instagram.com/ni.g2509?igsh=aTRhaWZ1OW44bGJu" target="_blank" rel="noopener" class="ig-link">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          @ni.g2509
+        </a>
+      </div>
+      <div class="k3d-team-card k3d-reveal">
+        <div class="k3d-team-avatar">P</div>
+        <div class="k3d-team-role">Verkaufsmanagement</div>
+        <h3>Pascal Schmidt</h3>
+        <p>Kundenkontakte, Verkaufsgespräche und Außentermine. Baut das Partnernetzwerk mit Blumenläden aus.</p>
+        <a href="https://www.instagram.com/pascal_schmidt_09?igsh=MTRwZGVwc3hlczdpbw==" target="_blank" rel="noopener" class="ig-link">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          @pascal_schmidt_09
+        </a>
+      </div>
+      <div class="k3d-team-card k3d-reveal">
+        <div class="k3d-team-avatar">T</div>
+        <div class="k3d-team-role">Markenbotschafter</div>
+        <h3>Til Peschke</h3>
+        <p>Content Creation, Social Media auf TikTok und Instagram sowie das gesamte Corporate Design von Kantan3D.</p>
+        <a href="https://www.instagram.com/t1l.png?igsh=MTFxcmlnb2N4NGszag%3D%3D&utm_source=qr" target="_blank" rel="noopener" class="ig-link">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          @t1l.png
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="k3d-contact">
+    <div class="k3d-bg-text" style="bottom:-10px;left:-30px">04</div>
+    <div class="k3d-reveal"><div class="k3d-section-label">Kontakt</div><h2>Anfrage stellen</h2></div>
+    <div class="k3d-contact-layout">
+      <div class="k3d-contact-info k3d-reveal">
+        <p>Schreibt uns – ob individuelle Bestellung, B2B-Partnerschaft oder eine einfache Frage. Wir melden uns innerhalb von 48 Stunden.</p>
+        <div class="k3d-ci-row"><div class="k3d-ci-icon">✉</div><span class="k3d-ci-val">kantan3d.business@gmail.com</span></div>
+        <div class="k3d-ci-row"><div class="k3d-ci-icon">📍</div><span class="k3d-ci-val">Merseburg, Deutschland</span></div>
+        <div class="k3d-ci-row"><div class="k3d-ci-icon">⏱</div><span class="k3d-ci-val">Antwort innerhalb von 48h</span></div>
+        <div class="k3d-ci-row">
+          <a href="https://www.instagram.com/kantan3d?igsh=OXk5MG9ndGhvMHF4&utm_source=qr" target="_blank" rel="noopener" class="k3d-ci-icon" style="text-decoration:none;color:#1a6ee8;border-color:rgba(26,110,232,.3)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a href="https://www.instagram.com/kantan3d?igsh=OXk5MG9ndGhvMHF4&utm_source=qr" target="_blank" rel="noopener" style="color:#1a6ee8;text-decoration:none;font-size:13px">@kantan3d</a>
+        </div>
+      </div>
+      <div class="k3d-reveal">
+        <div id="k3d-status-ok" class="k3d-status-ok" style="display:none">✓ Nachricht gesendet! Wir melden uns innerhalb von 48 Stunden.</div>
+        <div id="k3d-status-err" class="k3d-status-err" style="display:none">Fehler – bitte direkt schreiben: kantan3d.business@gmail.com</div>
+        <div id="k3d-status-val" class="k3d-status-err" style="display:none">Bitte alle Pflichtfelder ausfüllen.</div>
+        <div class="k3d-form-group"><label>Name *</label><input type="text" id="k3d-f-name" placeholder="Max Mustermann"/></div>
+        <div class="k3d-form-group"><label>E-Mail *</label><input type="email" id="k3d-f-email" placeholder="max@beispiel.de"/></div>
+        <div class="k3d-form-group">
+          <label>Betreff</label>
+          <select id="k3d-f-subject">
+            <option>Allgemeine Anfrage</option>
+            <option>B2B-Partnerschaft</option>
+            <option>Individuelle Bestellung</option>
+            <option>Auftragsfertigung</option>
+            <option>Angebot anfordern</option>
+            <option>Sonstiges</option>
+          </select>
+        </div>
+        <div class="k3d-form-group"><label>Nachricht *</label><textarea id="k3d-f-msg" placeholder="Beschreibt euer Vorhaben – Menge, Material, Deadline..."></textarea></div>
+        <button class="k3d-btn-primary" id="k3d-submit-btn" onclick="sendK3DForm()" style="width:100%">Nachricht senden →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER K3D -->
+  <footer id="k3d-footer">
+    <div class="k3d-footer-inner">
+      <div>
+        <div class="k3d-footer-logo">KANTAN<span>3D</span></div>
+        <p class="k3d-footer-tagline">If you can imagine it, we can print it.<br>Merseburg, Deutschland</p>
+        <div class="social-row" style="margin-top:14px">
+          <a href="https://www.instagram.com/kantan3d?igsh=OXk5MG9ndGhvMHF4&utm_source=qr" target="_blank" rel="noopener" class="social-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+            @kantan3d
+          </a>
+          <a href="https://ebay.io/m/Or711A" target="_blank" rel="noopener" class="social-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            eBay Shop
+          </a>
+        </div>
+      </div>
+      <div class="k3d-footer-links">
+        <a href="javascript:void(0)" onclick="document.getElementById('k3d-products').scrollIntoView({behavior:'smooth'})">Produkte</a>
+        <a href="javascript:void(0)" onclick="document.getElementById('k3d-vorteile').scrollIntoView({behavior:'smooth'})">Vorteile</a>
+        <a href="javascript:void(0)" onclick="document.getElementById('k3d-team').scrollIntoView({behavior:'smooth'})">Team</a>
+        <a href="javascript:void(0)" onclick="document.getElementById('k3d-contact').scrollIntoView({behavior:'smooth'})">Kontakt</a>
+        <a href="https://ebay.io/m/Or711A" target="_blank" rel="noopener" style="color:#1a6ee8">eBay Shop ↗</a>
+      </div>
+    </div>
+    <div class="k3d-footer-bottom">
+      <p>© 2026 Kantan3D – Niklas Göthe, Pascal Schmidt, Til Peschke</p>
+      <p>kantan3d.business@gmail.com</p>
+    </div>
+  </footer>
+
+</div><!-- /#panel-k3d -->
+
+<!-- ═══════════════════════════════════════════════
+     KANTA SYSTEMS PANEL
+═══════════════════════════════════════════════ -->
+<div id="panel-ks" class="panel" style="display:none">
+
+  <!-- HERO -->
+  <section class="ks-hero" id="ks-home">
+    <canvas id="ks-hero-canvas"></canvas>
+    <div class="ks-hero-bg-grid"></div>
+    <div class="ks-hero-left">
+      <div class="ks-hero-eyebrow"><div class="ks-eyebrow-dot"></div>Software · Merseburg · 2026</div>
+      <h1>
+        <span class="ks-h1-line"><span id="ks-h1-1">Wir bauen</span></span>
+        <span class="ks-h1-line"><span id="ks-h1-2" class="ks-grad">smarte Software</span></span>
+        <span class="ks-h1-line"><span id="ks-h1-3">die bewegt.</span></span>
+      </h1>
+      <p class="ks-hero-desc">Kanta Systems entwickelt digitale Produkte für echte Probleme — beginnend mit der vollständigen Digitalisierung des deutschen Schulalltags.</p>
+      <div class="ks-hero-actions">
+        <a href="javascript:void(0)" onclick="document.getElementById('ks-vision').scrollIntoView({behavior:'smooth'})" class="ks-btn-mag ks-btn-fill">Unsere Vision</a>
+        <a href="javascript:void(0)" onclick="document.getElementById('ks-kontakt').scrollIntoView({behavior:'smooth'})" class="ks-btn-mag ks-btn-ghost">Kontakt aufnehmen →</a>
+      </div>
+    </div>
+    <div class="ks-hero-right">
+      <div class="ks-cards-float">
+        <div class="ks-h-card" data-tilt>
+          <div class="ks-hc-label">Erstes Produkt</div>
+          <div class="ks-hc-title">Kanta School</div>
+          <div class="ks-hc-desc">Schulmanagement neu gedacht — eine Plattform für alle Rollen.</div>
+          <div class="ks-hc-chips">
+            <span class="ks-hc-chip">Stundenplan</span>
+            <span class="ks-hc-chip">KI-Tutor</span>
+            <span class="ks-hc-chip">Notenbuch</span>
+          </div>
+        </div>
+        <div class="ks-h-card" data-tilt>
+          <div class="ks-hc-label">Features</div>
+          <div class="ks-hc-chips" style="margin-top:.4rem">
+            <span class="ks-hc-chip">Vertretungsplan</span>
+            <span class="ks-hc-chip">Elternzugang</span>
+            <span class="ks-hc-chip">Rollenbasiert</span>
+          </div>
+          <div class="ks-hc-dots" style="margin-top:1rem">
+            <div class="ks-hc-dot on"></div><div class="ks-hc-dot on"></div>
+            <div class="ks-hc-dot on"></div><div class="ks-hc-dot"></div>
+          </div>
+        </div>
+        <div class="ks-h-card" data-tilt>
+          <div class="ks-status-pill"><div class="ks-status-dot"></div>In Entwicklung</div>
+          <div class="ks-hc-label">Kanta School — Phase 1 Konzept abgeschlossen</div>
+          <div class="ks-hc-num" style="font-size:1.6rem;margin-top:.5rem">3</div>
+          <div class="ks-hc-sub">Gründer · Merseburg</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAT BAR -->
+  <div class="ks-stat-bar">
+    <div class="ks-stat-item"><div class="ks-stat-num-big"><span class="ks-counter" data-target="3">3</span><sup>+</sup></div><div class="ks-stat-label">Gründer</div></div>
+    <div class="ks-stat-item"><div class="ks-stat-num-big"><span class="ks-counter" data-target="1">1</span><sup>st</sup></div><div class="ks-stat-label">Produkt in Entwicklung</div></div>
+    <div class="ks-stat-item"><div class="ks-stat-num-big">∞</div><div class="ks-stat-label">Möglichkeiten</div></div>
+  </div>
+
+  <div class="ks-divider"></div>
+
+  <!-- VISION -->
+  <section class="ks-section" id="ks-vision" style="background:var(--ks-bg-deep)">
+    <div class="ks-section-bg-text">Vision</div>
+    <div class="ks-vision-inner" style="position:relative;z-index:1">
+      <div>
+        <div class="ks-section-chip">Wer wir sind</div>
+        <h2>Software,<br>die wirklich<br>bewegt.</h2>
+        <p class="ks-section-p" style="margin-top:1.25rem">Kanta Systems ist ein junges Softwareunternehmen aus Merseburg. Unsere Mission: komplexe Systeme radikal vereinfachen — für echte Nutzer, nicht für Entwickler.</p>
+        <p class="ks-section-p" style="margin-top:1rem">Als Teil des Kantan3D-Ökosystems verbinden wir Produktentwicklung, Marketing und Technik zu einem Team, das liefert.</p>
+      </div>
+      <div class="ks-vision-stack">
+        <div class="ks-v-card" data-tilt><div class="ks-v-icon">🎯</div><div><div class="ks-v-title">Problem zuerst</div><div class="ks-v-desc">Wir starten nie mit Technologie — wir starten mit dem echten Problem, das gelöst werden muss.</div></div></div>
+        <div class="ks-v-card" data-tilt><div class="ks-v-icon">⚡</div><div><div class="ks-v-title">Schnell iterieren</div><div class="ks-v-desc">Konzept, Feedback, anpassen — wir liefern lieber früh und oft als spät und perfekt.</div></div></div>
+        <div class="ks-v-card" data-tilt><div class="ks-v-icon">🔗</div><div><div class="ks-v-title">Verbunden denken</div><div class="ks-v-desc">Jedes Kanta-Produkt ist Teil eines Ökosystems. Hardware, Software und Marke greifen ineinander.</div></div></div>
+      </div>
+    </div>
+  </section>
+  <div class="ks-divider"></div>
+
+  <!-- PRODUKT -->
+  <section class="ks-section" id="ks-produkt" style="background:var(--ks-bg-mid)">
+    <div style="margin-bottom:3.5rem">
+      <div class="ks-section-chip">Erstes Produkt</div>
+      <h2>Die Schulplattform.</h2>
+      <p class="ks-section-p">Unser erstes Produkt digitalisiert den deutschen Schulalltag — von der Schulleitung bis zum Schüler, alles unter einem Dach.</p>
+    </div>
+    <div class="ks-product-wrap" style="grid-template-columns:1fr">
+      <div class="ks-product-body" style="border-right:none">
+        <div class="ks-product-tag"><div class="ks-product-tag-dot"></div>In Entwicklung</div>
+        <h3 class="ks-product-h3">Kanta School</h3>
+        <p class="ks-product-desc">Eine vollintegrierte Schul- und Organisations-App. Stundenpläne, Noten, Vertretungen und KI-gestützte Lernassistenten — eine Plattform, keine fünf verschiedenen Apps.</p>
+        <div class="ks-product-chips">
+          <div class="ks-p-chip">Stundenplan</div><div class="ks-p-chip">Notenbuch</div>
+          <div class="ks-p-chip">Vertretungsplan</div><div class="ks-p-chip">KI-Tutor</div>
+          <div class="ks-p-chip">Rollenbasiert</div><div class="ks-p-chip">Elternzugang</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="ks-divider"></div>
+
+  <!-- TEAM KS -->
+  <section class="ks-section" id="ks-team" style="background:var(--ks-bg-deep)">
+    <div class="ks-section-bg-text" style="-webkit-text-stroke:1px rgba(37,99,235,.05)">Team</div>
+    <div style="margin-bottom:4rem;position:relative;z-index:1">
+      <div class="ks-section-chip">Das Team</div>
+      <h2>Jung.<br>Ambitioniert.<br>Fokussiert.</h2>
+      <p class="ks-section-p">Gegründet von drei Schülern aus Merseburg, die aufgehört haben zu warten, bis sie alt genug sind.</p>
+    </div>
+    <div class="ks-team-grid" style="position:relative;z-index:1">
+      <div class="ks-t-card" data-tilt>
+        <div class="ks-t-avatar">NG</div>
+        <div class="ks-t-name">Niklas Göthe</div>
+        <div class="ks-t-role">CTO · Engineering</div>
+        <div class="ks-t-desc">Technik, Konstruktion und digitale Infrastruktur. Verantwortlich für alles, was unter der Haube passiert.</div>
+        <a href="https://www.instagram.com/ni.g2509?igsh=aTRhaWZ1OW44bGJu" target="_blank" rel="noopener" class="ig-link" style="margin-top:auto;padding-top:14px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          @ni.g2509
+        </a>
+      </div>
+      <div class="ks-t-card" data-tilt>
+        <div class="ks-t-avatar">PS</div>
+        <div class="ks-t-name">Pascal Schmidt</div>
+        <div class="ks-t-role">COO · Produkt & Vertrieb</div>
+        <div class="ks-t-desc">Produktstrategie, Kundenkontakte und der Antrieb hinter Kanta Systems als eigenem Standbein.</div>
+        <a href="https://www.instagram.com/pascal_schmidt_09?igsh=MTRwZGVwc3hlczdpbw==" target="_blank" rel="noopener" class="ig-link" style="margin-top:auto;padding-top:14px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          @pascal_schmidt_09
+        </a>
+      </div>
+      <div class="ks-t-card" data-tilt>
+        <div class="ks-t-avatar">TP</div>
+        <div class="ks-t-name">Til Peschke</div>
+        <div class="ks-t-role">CMO · Marke & Marketing</div>
+        <div class="ks-t-desc">Markenidentität, Social Media und der Außenauftritt — von TikTok bis zum Messegespräch.</div>
+        <a href="https://www.instagram.com/t1l.png?igsh=MTFxcmlnb2N4NGszag%3D%3D&utm_source=qr" target="_blank" rel="noopener" class="ig-link" style="margin-top:auto;padding-top:14px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          @t1l.png
+        </a>
+      </div>
+    </div>
+  </section>
+  <div class="ks-divider"></div>
+
+  <!-- ÖKOSYSTEM -->
+  <section class="ks-section" id="ks-oekosystem" style="background:var(--ks-bg-mid)">
+    <div style="margin-bottom:3.5rem">
+      <div class="ks-section-chip">Das Kantan-Ökosystem</div>
+      <h2>Mehr als Software.</h2>
+      <p class="ks-section-p">Kanta Systems ist Teil des Kantan3D-Ökosystems — ein Team, eine Vision, zwei Marken.</p>
+    </div>
+    <div class="ks-eco-wrap">
+      <div class="ks-e-card here">
+        <span class="ks-e-chip ks">Kanta Systems</span>
+        <div class="ks-e-title">Software & Plattformen</div>
+        <div class="ks-e-desc">Digitale Produkte für Schulen, Organisationen und darüber hinaus. Erstes Produkt: Kanta School.</div>
+        <div class="ks-e-badge active">Du bist hier</div>
+      </div>
+      <div class="ks-e-card" onclick="setBrand('k3d');window.scrollTo({top:0,behavior:'smooth'})">
+        <span class="ks-e-chip k3d">Kantan3D</span>
+        <div class="ks-e-title">3D-Druck & Hardware</div>
+        <div class="ks-e-desc">Lokale Produktion von RC-Fahrzeugen, B2B-Gadgets und individuellem 3D-Druck aus Merseburg.</div>
+        <div class="ks-e-badge link">→ Zur Kantan3D-Seite</div>
+      </div>
+    </div>
+  </section>
+  <div class="ks-divider"></div>
+
+  <!-- KONTAKT KS -->
+  <section class="ks-section" id="ks-kontakt" style="background:var(--ks-bg-deep)">
+    <div style="margin-bottom:3.5rem">
+      <div class="ks-section-chip">Kontakt</div>
+      <h2>Schreibt uns.</h2>
+    </div>
+    <div class="ks-contact-wrap">
+      <div>
+        <p style="color:var(--ks-text-mid);font-size:.97rem;line-height:1.85;margin-bottom:2rem;font-weight:300;max-width:380px">Ob Schule, Partnerschaft oder eine einfache Frage — wir freuen uns über jede Nachricht und melden uns innerhalb von 48 Stunden.</p>
+        <div class="ks-c-info-list">
+          <div class="ks-c-row"><div class="ks-c-icon">✉</div><span class="ks-c-val">kantan3d.business@gmail.com</span></div>
+          <div class="ks-c-row"><div class="ks-c-icon">📍</div><span class="ks-c-val">Merseburg, Deutschland</span></div>
+          <div class="ks-c-row"><div class="ks-c-icon">⏱</div><span class="ks-c-val">Antwort innerhalb von 48h</span></div>
+          <div class="ks-c-row"><div class="ks-c-icon">🔗</div><span class="ks-c-val" style="color:var(--ks-purple-200)">Teil des Kantan3D-Ökosystems</span></div>
+          <div class="ks-c-row">
+            <a href="https://www.instagram.com/kantasystems?igsh=MWZweWR4dWZxaHhpeQ%3D%3D&utm_source=qr" target="_blank" rel="noopener" class="ks-c-icon" style="text-decoration:none;color:var(--ks-purple-200)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+            </a>
+            <a href="https://www.instagram.com/kantasystems?igsh=MWZweWR4dWZxaHhpeQ%3D%3D&utm_source=qr" target="_blank" rel="noopener" style="color:var(--ks-purple-200);text-decoration:none;font-size:.87rem;font-weight:300">@kantasystems</a>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div id="ks-msg-ok" class="ks-msg-ok" style="display:none">✓ Nachricht gesendet! Wir melden uns innerhalb von 48 Stunden.</div>
+        <div id="ks-msg-err" class="ks-msg-err" style="display:none">Fehler — bitte direkt an: kantan3d.business@gmail.com</div>
+        <div id="ks-msg-val" class="ks-msg-err" style="display:none">Bitte alle Pflichtfelder ausfüllen.</div>
+        <div class="ks-form-group"><label class="ks-form-label">Name *</label><input class="ks-form-control" type="text" id="ks-f-name" placeholder="Max Mustermann"/></div>
+        <div class="ks-form-group"><label class="ks-form-label">E-Mail *</label><input class="ks-form-control" type="email" id="ks-f-email" placeholder="max@beispiel.de"/></div>
+        <div class="ks-form-group">
+          <label class="ks-form-label">Interesse</label>
+          <select class="ks-form-control" id="ks-f-interest">
+            <option>Allgemeine Anfrage</option><option>Schul-Lizenz anfragen</option>
+            <option>Partnerschaft / B2B</option><option>Demo anfragen</option>
+            <option>Investoren-Anfrage</option><option>Sonstiges</option>
+          </select>
+        </div>
+        <div class="ks-form-group"><label class="ks-form-label">Nachricht *</label><textarea class="ks-form-control" id="ks-f-msg" placeholder="Beschreibt euer Vorhaben oder eure Frage..."></textarea></div>
+        <button class="ks-btn-submit" id="ks-submit-btn" onclick="sendKSForm()">Nachricht senden →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER KS -->
+  <footer class="ks-footer" style="flex-wrap:wrap;gap:1.5rem">
+    <div>
+      <div class="ks-footer-logo"><div class="logo-icon-ks" style="width:28px;height:28px;font-size:11px">KS</div>Kanta Systems</div>
+      <div class="social-row">
+        <a href="https://www.instagram.com/kantasystems?igsh=MWZweWR4dWZxaHhpeQ%3D%3D&utm_source=qr" target="_blank" rel="noopener" class="social-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          @kantasystems
+        </a>
+      </div>
+    </div>
+    <a href="mailto:kantan3d.business@gmail.com" class="ks-footer-mail">kantan3d.business@gmail.com</a>
+    <div class="ks-footer-copy">© 2026 Kanta Systems · Part of the Kantan3D Ecosystem · Merseburg</div>
+  </footer>
+
+</div><!-- /#panel-ks -->
+
+<!-- ─── SCRIPTS ─── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+emailjs.init({ publicKey: "U-WEdLQEh2rSHUBdV" });
+gsap.registerPlugin(ScrollTrigger);
+
+/* ── BRAND TOGGLE ── */
+let currentBrand = 'k3d';
+let k3dThreeInit = false;
+let ksThreeInit  = false;
+
+function setBrand(brand) {
+  if (brand === currentBrand) return;
+  currentBrand = brand;
+  const body = document.body;
+  body.classList.remove('brand-k3d','brand-ks');
+  body.classList.add('brand-' + brand);
+  document.getElementById('panel-k3d').style.display = brand === 'k3d' ? 'block' : 'none';
+  document.getElementById('panel-ks').style.display  = brand === 'ks'  ? 'block' : 'none';
+  // Update loader logo display
+  document.querySelector('.loader-logo-k3d').style.display = brand === 'k3d' ? 'block' : 'none';
+  document.querySelector('.loader-logo-ks').style.display  = brand === 'ks'  ? 'block' : 'none';
+  // Mobile menus
+  document.getElementById('mobileMenuK3d').style.display = 'none';
+  document.getElementById('mobileMenuKS').style.display  = 'none';
+  document.getElementById('hamburger').classList.remove('open');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  if (brand === 'k3d' && !k3dThreeInit) { initK3DThree(); k3dThreeInit = true; }
+  if (brand === 'ks'  && !ksThreeInit)  { initKSThree();  ksThreeInit  = true; }
+  setupReveal();
+}
+
+/* ── LOADER ── */
+let prog = 0;
+const bar = document.getElementById('loaderBar');
+const pct = document.getElementById('loaderPct');
+const ldr = document.getElementById('loader');
+const iv = setInterval(() => {
+  prog += Math.random() * 16 + 5;
+  if (prog >= 100) { prog = 100; clearInterval(iv); setTimeout(startSite, 300); }
+  bar.style.width = Math.min(prog, 100) + '%';
+  pct.textContent = Math.floor(Math.min(prog, 100)) + '%';
+}, 80);
+
+function startSite() {
+  ldr.style.opacity = '0'; ldr.style.pointerEvents = 'none';
+  setTimeout(() => {
+    ldr.style.display = 'none';
+    initK3DThree(); k3dThreeInit = true;
+    k3dHeroEntrance();
+    setupReveal();
+  }, 800);
+}
+
+/* ── CURSOR ── */
+const curDot  = document.getElementById('cursorDot');
+const curRing = document.getElementById('cursorRing');
+let cx=-200,cy=-200,rx=-200,ry=-200;
+document.addEventListener('mousemove', e => { cx=e.clientX; cy=e.clientY; });
+(function tickCursor(){
+  curDot.style.left=cx+'px'; curDot.style.top=cy+'px';
+  rx+=(cx-rx)*.1; ry+=(cy-ry)*.1;
+  curRing.style.left=rx+'px'; curRing.style.top=ry+'px';
+  requestAnimationFrame(tickCursor);
+})();
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest('a,button,.k3d-prod-card,.k3d-team-card,.ks-v-card,.ks-t-card,.ks-e-card,[data-tilt]');
+  if (el) curRing.classList.add('hover'); else curRing.classList.remove('hover');
+});
+
+/* ── NAV ── */
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+function toggleMenu() {
+  const isK3d = currentBrand === 'k3d';
+  const menuEl = isK3d ? document.getElementById('mobileMenuK3d') : document.getElementById('mobileMenuKS');
+  const ham = document.getElementById('hamburger');
+  ham.classList.toggle('open');
+  menuEl.classList.toggle('open');
+}
+function closeMenu() {
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('mobileMenuK3d').classList.remove('open');
+  document.getElementById('mobileMenuKS').classList.remove('open');
+}
+
+/* ── K3D THREE.JS ── */
+let k3dRenderer, k3dScene, k3dCam, k3dPts, k3dTk, k3dMouse={x:0,y:0,tx:0,ty:0};
+function initK3DThree() {
+  const canvas = document.getElementById('k3d-hero-canvas');
+  k3dScene = new THREE.Scene();
+  k3dCam = new THREE.PerspectiveCamera(60, canvas.clientWidth/canvas.clientHeight, 0.1, 1000);
+  k3dCam.position.z = 5;
+  k3dRenderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  k3dRenderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  k3dRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+  k3dRenderer.setClearColor(0x000000,0);
+  const N = window.innerWidth<640?700:1800;
+  const pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  for(let i=0;i<N;i++){
+    pos[i*3]=(Math.random()-.5)*16; pos[i*3+1]=(Math.random()-.5)*10; pos[i*3+2]=(Math.random()-.5)*8;
+    if(Math.random()<.25){col[i*3]=.1;col[i*3+1]=.43;col[i*3+2]=.9;}
+    else{col[i*3]=.22;col[i*3+1]=.22;col[i*3+2]=.3;}
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  k3dPts=new THREE.Points(geo,new THREE.PointsMaterial({size:.017,vertexColors:true,transparent:true,opacity:.75,sizeAttenuation:true}));
+  k3dScene.add(k3dPts);
+  const tkGeo=new THREE.TorusKnotGeometry(1.1,.32,100,14);
+  const tkMat=new THREE.MeshBasicMaterial({color:0x1a6ee8,wireframe:true,opacity:.1,transparent:true});
+  k3dTk=new THREE.Mesh(tkGeo,tkMat);
+  k3dTk.position.set(3.5,.3,-2);
+  k3dScene.add(k3dTk);
+  window.addEventListener('mousemove',e=>{k3dMouse.tx=(e.clientX/window.innerWidth-.5)*2;k3dMouse.ty=-(e.clientY/window.innerHeight-.5)*2});
+  (function tick(){
+    requestAnimationFrame(tick);
+    if(currentBrand!=='k3d') return;
+    k3dMouse.x+=(k3dMouse.tx-k3dMouse.x)*.04;
+    k3dMouse.y+=(k3dMouse.ty-k3dMouse.y)*.04;
+    k3dPts.rotation.y+=.0007+k3dMouse.x*.001;
+    k3dPts.rotation.x+=.0002;
+    k3dTk.rotation.x+=.005; k3dTk.rotation.y+=.008;
+    k3dTk.rotation.x+=k3dMouse.y*.003; k3dTk.rotation.y+=k3dMouse.x*.003;
+    k3dRenderer.render(k3dScene,k3dCam);
+  })();
+  window.addEventListener('resize',()=>{
+    k3dCam.aspect=canvas.clientWidth/canvas.clientHeight;
+    k3dCam.updateProjectionMatrix();
+    k3dRenderer.setSize(canvas.clientWidth,canvas.clientHeight);
+  });
+}
+
+function k3dHeroEntrance() {
+  const tl=gsap.timeline();
+  tl.to('.k3d-hero-eyebrow',{opacity:1,duration:.8,ease:'power3.out'});
+  document.querySelectorAll('#k3d-hero h1 .line span').forEach((el,i)=>{
+    tl.to(el,{y:'0%',duration:1,ease:'power4.out'},0.1+i*.14);
+  });
+  tl.to('.k3d-hero-desc-row',{opacity:1,y:0,duration:.8,ease:'power3.out'},.5);
+  tl.to('.k3d-hero-stats',{opacity:1,y:0,duration:.7,ease:'power3.out'},.7);
+  tl.to('#k3dScrollInd',{opacity:1,duration:.5},1.2);
+}
+
+/* ── KS THREE.JS ── */
+let ksRenderer,ksScene,ksCam,ksParticles,ksHelixGroup,ksMesh2,ksClock=0,ksMouse={x:0,y:0,tx:0,ty:0};
+function initKSThree() {
+  const canvas=document.getElementById('ks-hero-canvas');
+  ksScene=new THREE.Scene();
+  ksCam=new THREE.PerspectiveCamera(60,canvas.clientWidth/canvas.clientHeight,.1,100);
+  ksCam.position.z=5;
+  ksRenderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  ksRenderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  ksRenderer.setSize(canvas.clientWidth,canvas.clientHeight);
+  // particles
+  const N=1800,positions=new Float32Array(N*3),colors=new Float32Array(N*3);
+  for(let i=0;i<N;i++){
+    positions[i*3]=(Math.random()-.5)*16;
+    positions[i*3+1]=(Math.random()-.5)*12;
+    positions[i*3+2]=(Math.random()-.5)*8-2;
+    const t=Math.random();
+    colors[i*3]=.1+t*.2; colors[i*3+1]=.3+t*.35; colors[i*3+2]=.7+t*.3;
+  }
+  const pGeo=new THREE.BufferGeometry();
+  pGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  pGeo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+  ksParticles=new THREE.Points(pGeo,new THREE.PointsMaterial({size:.018,vertexColors:true,transparent:true,opacity:.65}));
+  ksScene.add(ksParticles);
+  // helix
+  ksHelixGroup=new THREE.Group();
+  ksScene.add(ksHelixGroup);
+  ksHelixGroup.position.set(3.2,0,-.5);
+  const sGeo=new THREE.SphereGeometry(.07,10,10);
+  const matA=new THREE.MeshBasicMaterial({color:0x3b82f6,transparent:true,opacity:.85});
+  const matB=new THREE.MeshBasicMaterial({color:0x1a45c8,transparent:true,opacity:.7});
+  const matC=new THREE.MeshBasicMaterial({color:0x2563eb,transparent:true,opacity:.35});
+  const steps=28,radius=.45,height=4,turns=2.5;
+  for(let i=0;i<steps;i++){
+    const t=i/(steps-1),angle=t*Math.PI*2*turns,y=(t-.5)*height;
+    const sA=new THREE.Mesh(sGeo,matA.clone());
+    sA.position.set(Math.cos(angle)*radius,y,Math.sin(angle)*radius);
+    ksHelixGroup.add(sA);
+    const sB=new THREE.Mesh(sGeo,matB.clone());
+    sB.position.set(Math.cos(angle+Math.PI)*radius,y,Math.sin(angle+Math.PI)*radius);
+    ksHelixGroup.add(sB);
+    if(i%3===0){
+      const pA=new THREE.Vector3(Math.cos(angle)*radius,y,Math.sin(angle)*radius);
+      const pB=new THREE.Vector3(Math.cos(angle+Math.PI)*radius,y,Math.sin(angle+Math.PI)*radius);
+      const dir=new THREE.Vector3().subVectors(pB,pA);
+      const len=dir.length();
+      const cGeo=new THREE.CylinderGeometry(.015,.015,len,6);
+      const conn=new THREE.Mesh(cGeo,matC);
+      conn.position.copy(pA).lerp(pB,.5);
+      conn.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+      ksHelixGroup.add(conn);
+    }
+  }
+  const ringGeo=new THREE.TorusGeometry(radius*1.6,.02,8,48);
+  const ringMat=new THREE.MeshBasicMaterial({color:0x2563eb,transparent:true,opacity:.2});
+  const r1=new THREE.Mesh(ringGeo,ringMat); r1.position.y=height/2; ksHelixGroup.add(r1);
+  const r2=r1.clone(); r2.position.y=-height/2; ksHelixGroup.add(r2);
+  const iGeo=new THREE.IcosahedronGeometry(.4,1);
+  const iMat=new THREE.MeshBasicMaterial({color:0x1a45c8,wireframe:true,transparent:true,opacity:.08});
+  ksMesh2=new THREE.Mesh(iGeo,iMat); ksMesh2.position.set(-3.5,-1.2,-2.5);
+  ksScene.add(ksMesh2);
+  window.addEventListener('mousemove',e=>{ksMouse.tx=(e.clientX/window.innerWidth-.5)*2;ksMouse.ty=-(e.clientY/window.innerHeight-.5)*2});
+  (function animKS(){
+    requestAnimationFrame(animKS);
+    if(currentBrand!=='ks') return;
+    ksClock+=.005;
+    ksMouse.x+=(ksMouse.tx-ksMouse.x)*.04;
+    ksMouse.y+=(ksMouse.ty-ksMouse.y)*.04;
+    ksParticles.rotation.y=ksClock*.08+ksMouse.x*.12;
+    ksParticles.rotation.x=ksMouse.y*.06;
+    ksHelixGroup.rotation.y=ksClock*.35+ksMouse.x*.2;
+    ksHelixGroup.rotation.x=ksMouse.y*.08;
+    ksMesh2.rotation.x=ksClock*.2+ksMouse.y*.15;
+    ksMesh2.rotation.z=ksClock*.15;
+    ksRenderer.render(ksScene,ksCam);
+  })();
+  window.addEventListener('resize',()=>{
+    ksCam.aspect=canvas.clientWidth/canvas.clientHeight;
+    ksCam.updateProjectionMatrix();
+    ksRenderer.setSize(canvas.clientWidth,canvas.clientHeight);
+  });
+  // KS entrance
+  gsap.from('#ks-h1-1',{y:'110%',duration:1,ease:'power4.out',delay:.1});
+  gsap.from('#ks-h1-2',{y:'110%',duration:1,ease:'power4.out',delay:.22});
+  gsap.from('#ks-h1-3',{y:'110%',duration:1,ease:'power4.out',delay:.34});
+  gsap.from('.ks-hero-eyebrow',{opacity:0,y:20,duration:.9,ease:'power3.out',delay:.05});
+  gsap.from('.ks-hero-desc',{opacity:0,y:20,duration:.9,ease:'power3.out',delay:.5});
+  gsap.from('.ks-hero-actions',{opacity:0,y:20,duration:.9,ease:'power3.out',delay:.65});
+  gsap.from('.ks-cards-float .ks-h-card',{opacity:0,x:40,duration:.9,stagger:.12,ease:'power3.out',delay:.7});
+}
+
+/* ── SCROLL REVEAL ── */
+function setupReveal() {
+  // K3D
+  document.querySelectorAll('.k3d-reveal').forEach(el => {
+    if(!el.classList.contains('_observed')) {
+      el.classList.add('_observed');
+      const obs=new IntersectionObserver(([e])=>{if(e.isIntersecting){el.classList.add('visible');obs.disconnect()}},{threshold:.12});
+      obs.observe(el);
+    }
+  });
+  // KS
+  gsap.utils.toArray('.ks-section-chip,.ks-section-p').forEach(el=>{
+    gsap.from(el,{scrollTrigger:{trigger:el,start:'top 88%'},opacity:0,y:30,duration:.9,ease:'power3.out'});
+  });
+}
+
+/* ── 3D TILT (KS) ── */
+document.querySelectorAll('[data-tilt]').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`perspective(700px) rotateY(${x*9}deg) rotateX(${-y*9}deg) translateY(-4px)`;
+  });
+  card.addEventListener('mouseleave',()=>{card.style.transform=''});
+});
+
+/* ── KS COUNTER ── */
+const cObs=new IntersectionObserver(entries=>entries.forEach(e=>{
+  if(e.isIntersecting){
+    const el=e.target,target=+el.dataset.target;let cur=0;
+    const t=setInterval(()=>{cur=Math.min(cur+target/30,target);el.textContent=Math.round(cur);if(cur>=target)clearInterval(t)},40);
+    cObs.unobserve(el);
+  }
+}),{threshold:.5});
+document.querySelectorAll('.ks-counter').forEach(el=>cObs.observe(el));
+
+/* ── FORMS ── */
+function showK3DStatus(id){
+  ['k3d-status-ok','k3d-status-err','k3d-status-val'].forEach(s=>document.getElementById(s).style.display='none');
+  document.getElementById(id).style.display='block';
+}
+async function sendK3DForm(){
+  const name=document.getElementById('k3d-f-name').value.trim();
+  const email=document.getElementById('k3d-f-email').value.trim();
+  const subject=document.getElementById('k3d-f-subject').value;
+  const message=document.getElementById('k3d-f-msg').value.trim();
+  const btn=document.getElementById('k3d-submit-btn');
+  if(!name||!email||!message){showK3DStatus('k3d-status-val');return;}
+  btn.disabled=true;btn.textContent='Wird gesendet…';
+  try{
+    const res=await emailjs.send('service_1wyqv6e','template_3vxsesq',{from_name:name,from_email:email,subject,message});
+    if(res.status===200){showK3DStatus('k3d-status-ok');document.getElementById('k3d-f-name').value='';document.getElementById('k3d-f-email').value='';document.getElementById('k3d-f-msg').value='';}
+    else showK3DStatus('k3d-status-err');
+  }catch(e){showK3DStatus('k3d-status-err');}
+  btn.disabled=false;btn.textContent='Nachricht senden →';
+}
+function showKSMsg(id){
+  ['ks-msg-ok','ks-msg-err','ks-msg-val'].forEach(s=>document.getElementById(s).style.display='none');
+  document.getElementById(id).style.display='block';
+}
+async function sendKSForm(){
+  const name=document.getElementById('ks-f-name').value.trim();
+  const email=document.getElementById('ks-f-email').value.trim();
+  const interest=document.getElementById('ks-f-interest').value;
+  const message=document.getElementById('ks-f-msg').value.trim();
+  const btn=document.getElementById('ks-submit-btn');
+  if(!name||!email||!message){showKSMsg('ks-msg-val');return;}
+  btn.disabled=true;btn.textContent='Wird gesendet…';
+  try{
+    const res=await emailjs.send('service_1wyqv6e','template_3vxsesq',{from_name:name,from_email:email,interest,message});
+    if(res.status===200){showKSMsg('ks-msg-ok');document.getElementById('ks-f-name').value='';document.getElementById('ks-f-email').value='';document.getElementById('ks-f-msg').value='';}
+    else showKSMsg('ks-msg-err');
+  }catch(e){showKSMsg('ks-msg-err');}
+  btn.disabled=false;btn.textContent='Nachricht senden →';
+}
+</script>
+</body>
+</html>
